@@ -1,13 +1,13 @@
 package dev.lvstrng.argon.utils;
 
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.function.Supplier;
 
 public class RotationManager {
-    private static final Minecraft mc = Minecraft.getInstance();
+    private static final MinecraftClient mc = MinecraftClient.getInstance(); // Corrected type
     
     private static boolean isActive = false;
     private static boolean isSilent = false;
