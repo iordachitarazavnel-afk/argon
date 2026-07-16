@@ -7,7 +7,6 @@ import dev.lvstrng.argon.module.setting.NumberSetting;
 import dev.lvstrng.argon.utils.RotationManager;
 import dev.lvstrng.argon.utils.RotationTickHandler;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
@@ -20,7 +19,6 @@ import net.minecraft.util.math.Vec3d;
 public class SafeAnchor extends Module {
 
     // ===== SETTINGS =====
-    // NumberSetting: name, value, min, max, increment
     private final NumberSetting range = new NumberSetting("Range", 4.5, 1.0, 6.0, 0.1);
     private final NumberSetting rotationSpeed = new NumberSetting("Rotation Speed", 0.3, 0.05, 1.0, 0.05);
     private final BooleanSetting silentRotations = new BooleanSetting("Silent Rotations", true);
@@ -85,7 +83,7 @@ public class SafeAnchor extends Module {
     // ===== MAIN TICK LOGIC =====
     private void onTick() {
         if (mc.player == null || mc.world == null) return;
-        if (mc.interactionManager == null) return;  // Yarn: interactionManager
+        if (mc.interactionManager == null) return;
 
         tickCounter++;
 
@@ -128,7 +126,7 @@ public class SafeAnchor extends Module {
         }
         
         anchorPos = targetPos;
-        glowstonePos = anchorPos.up();  // Yarn: up()
+        glowstonePos = anchorPos.up();
         
         if (!mc.world.getBlockState(glowstonePos).isAir()) {
             return;
@@ -144,7 +142,7 @@ public class SafeAnchor extends Module {
             return;
         }
         
-        Vec3d eyePos = mc.player.getEyePos();  // Yarn: getEyePos()
+        Vec3d eyePos = mc.player.getEyePos();
         Vec3d targetCenter = Vec3d.ofCenter(anchorPos);
         float[] rotations = RotationManager.calculateRotationsTo(eyePos, targetCenter);
         
@@ -188,16 +186,16 @@ public class SafeAnchor extends Module {
                 currentState = State.IDLE;
                 return;
             }
-            // Yarn: selectedSlot - folosim setter
-            mc.player.getInventory().selectedSlot = slot;
+            // Folosim metoda setSelectedSlot() în loc de acces direct
+            mc.player.getInventory().setSelectedSlot(slot);
         }
         
         boolean placed = placeBlock(anchorPos);
         
         if (placed) {
             if (visualFeedback.getValue()) {
-                // Yarn: spawnBlockParticles
-                mc.particleManager.spawnBlockParticles(anchorPos, mc.world.getBlockState(anchorPos));
+                // Folosim metoda corectă pentru particule
+                mc.particleManager.addBlockBreakParticles(anchorPos, mc.world.getBlockState(anchorPos));
             }
             
             mc.player.sendMessage(Text.literal("§a✅ Respawn Anchor placed!"), false);
@@ -250,14 +248,14 @@ public class SafeAnchor extends Module {
                 currentState = State.IDLE;
                 return;
             }
-            mc.player.getInventory().selectedSlot = slot;
+            mc.player.getInventory().setSelectedSlot(slot);
         }
         
         boolean placed = placeBlock(glowstonePos);
         
         if (placed) {
             if (visualFeedback.getValue()) {
-                mc.particleManager.spawnBlockParticles(glowstonePos, mc.world.getBlockState(glowstonePos));
+                mc.particleManager.addBlockBreakParticles(glowstonePos, mc.world.getBlockState(glowstonePos));
             }
             
             currentState = State.COMPLETE;
@@ -294,7 +292,6 @@ public class SafeAnchor extends Module {
             false
         );
         
-        // Yarn: interactBlock
         mc.interactionManager.interactBlock(mc.player, Hand.MAIN_HAND, hitResult);
         
         return !mc.world.getBlockState(pos).isAir();
@@ -303,9 +300,11 @@ public class SafeAnchor extends Module {
     private Direction getPlaceDirection(BlockPos pos) {
         if (mc.player == null) return null;
         
-        Vec3d playerPos = mc.player.getPos();  // Yarn: getPos()
+        // Folosim getBlockPos() în loc de getPos() pentru poziția jucătorului
+        BlockPos playerBlockPos = mc.player.getBlockPos();
         Vec3d blockPos = Vec3d.ofCenter(pos);
-        Vec3d diff = blockPos.subtract(playerPos);
+        Vec3d playerCenter = Vec3d.ofCenter(playerBlockPos);
+        Vec3d diff = blockPos.subtract(playerCenter);
         
         if (Math.abs(diff.x) > Math.abs(diff.z)) {
             return diff.x > 0 ? Direction.WEST : Direction.EAST;
@@ -342,7 +341,7 @@ public class SafeAnchor extends Module {
     private boolean isValidAnchorPosition(BlockPos pos) {
         if (mc.world == null) return false;
         
-        BlockPos below = pos.down();  // Yarn: down()
+        BlockPos below = pos.down();
         if (!mc.world.getBlockState(below).isSolidBlock(mc.world, below)) {
             return false;
         }
@@ -351,7 +350,7 @@ public class SafeAnchor extends Module {
             return false;
         }
         
-        BlockPos above = pos.up();  // Yarn: up()
+        BlockPos above = pos.up();
         if (!mc.world.getBlockState(above).isAir()) {
             return false;
         }
