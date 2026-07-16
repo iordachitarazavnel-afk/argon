@@ -1,13 +1,12 @@
 package dev.lvstrng.argon.utils;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.function.Supplier;
-
 public class RotationManager {
-    private static final MinecraftClient mc = MinecraftClient.getInstance(); // Corrected type
+    private static final MinecraftClient mc = MinecraftClient.getInstance();
     
     private static boolean isActive = false;
     private static boolean isSilent = false;
@@ -25,19 +24,6 @@ public class RotationManager {
     private static Runnable onRotationComplete = null;
     private static boolean rotationComplete = false;
     
-    // Perspectivă și moduri
-    public static boolean perspective = false;
-    public static MovementMode movementMode = MovementMode.CLIENT;
-    public static RotationMode rotationMode = RotationMode.CLIENT;
-    
-    public enum MovementMode {
-        CLIENT, SERVER, BOTH
-    }
-    
-    public enum RotationMode {
-        CLIENT, SERVER, BOTH
-    }
-
     public static void setTargetRotation(float yaw, float pitch) {
         targetYaw = yaw;
         targetPitch = MathHelper.clamp(pitch, -90f, 90f);
@@ -46,8 +32,8 @@ public class RotationManager {
         rotationComplete = false;
         
         if (mc.player != null) {
-            currentYaw = mc.player.getYRot();
-            currentPitch = mc.player.getXRot();
+            currentYaw = mc.player.getYaw();        // Yarn: getYaw()
+            currentPitch = mc.player.getPitch();    // Yarn: getPitch()
             finalYaw = currentYaw;
             finalPitch = currentPitch;
             visualYaw = currentYaw;
@@ -66,8 +52,8 @@ public class RotationManager {
         rotationComplete = false;
         
         if (mc.player != null) {
-            currentYaw = mc.player.getYRot();
-            currentPitch = mc.player.getXRot();
+            currentYaw = mc.player.getYaw();
+            currentPitch = mc.player.getPitch();
             finalYaw = yaw;
             finalPitch = targetPitch;
             visualYaw = yaw;
@@ -85,7 +71,6 @@ public class RotationManager {
         lastUpdateTime = now;
         
         if (isSmooth) {
-            // Smooth interpolation
             float yawDiff = MathHelper.wrapDegrees(targetYaw - finalYaw);
             float pitchDiff = targetPitch - finalPitch;
             
@@ -93,7 +78,6 @@ public class RotationManager {
                 float speed = smoothSpeed * delta;
                 finalYaw += yawDiff * speed;
                 finalPitch += pitchDiff * speed;
-                
                 finalPitch = MathHelper.clamp(finalPitch, -90f, 90f);
             } else {
                 finalYaw = targetYaw;
@@ -114,15 +98,12 @@ public class RotationManager {
             }
         }
         
-        // Actualizează rotațiile vizuale
         visualYaw = finalYaw;
         visualPitch = finalPitch;
         
-        // Aplică rotațiile pe client
-        if (movementMode == MovementMode.CLIENT || movementMode == MovementMode.BOTH) {
-            mc.player.setYRot(finalYaw);
-            mc.player.setXRot(finalPitch);
-        }
+        // Aplică rotațiile pe client (Yarn: setYaw / setPitch)
+        mc.player.setYaw(finalYaw);
+        mc.player.setPitch(finalPitch);
     }
 
     public static void setOnRotationComplete(Runnable callback) {
@@ -149,11 +130,11 @@ public class RotationManager {
     }
 
     public static float getVisualYaw() {
-        return isActive ? visualYaw : (mc.player != null ? mc.player.getYRot() : 0);
+        return isActive ? visualYaw : (mc.player != null ? mc.player.getYaw() : 0);
     }
 
     public static float getVisualPitch() {
-        return isActive ? visualPitch : (mc.player != null ? mc.player.getXRot() : 0);
+        return isActive ? visualPitch : (mc.player != null ? mc.player.getPitch() : 0);
     }
 
     public static float getFinalYaw() {
@@ -168,37 +149,27 @@ public class RotationManager {
         smoothSpeed = MathHelper.clamp(speed, 0.01f, 1.0f);
     }
 
-    // Calculul rotațiilor către o poziție
     public static float[] calculateRotationsTo(Vec3d from, Vec3d to) {
         double dx = to.x - from.x;
         double dy = to.y - from.y;
         double dz = to.z - from.z;
-        
         double distance = Math.sqrt(dx * dx + dz * dz);
         float yaw = (float) Math.toDegrees(Math.atan2(-dx, dz));
         float pitch = (float) Math.toDegrees(-Math.atan2(dy, distance));
-        
         return new float[]{yaw, pitch};
     }
 
     public static float[] calculateRotationsToBlock(Vec3d blockPos) {
         if (mc.player == null) return new float[]{0, 0};
-        
-        Vec3d eyePos = mc.player.getEyePosition();
+        Vec3d eyePos = mc.player.getEyePos();  // Yarn: getEyePos()
         Vec3d targetPos = blockPos.add(0.5, 0.5, 0.5);
-        
         return calculateRotationsTo(eyePos, targetPos);
     }
 
-    // Face un flick de rotație (pentru SafeAnchor)
     public static void flickTick() {
         if (mc.player == null) return;
-        
-        // Aplică rotația instantaneu
-        mc.player.setYRot(finalYaw);
-        mc.player.setXRot(finalPitch);
-        
-        // Resetează după un tick
+        mc.player.setYaw(finalYaw);
+        mc.player.setPitch(finalPitch);
         isActive = false;
         rotationComplete = true;
     }
