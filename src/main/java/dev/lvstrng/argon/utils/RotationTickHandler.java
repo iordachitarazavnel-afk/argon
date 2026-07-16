@@ -1,7 +1,6 @@
 package dev.lvstrng.argon.utils;
 
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents; // Correct import for Fabric API
-import net.minecraft.client.MinecraftClient;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 
 public class RotationTickHandler {
 
