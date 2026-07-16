@@ -1,4 +1,4 @@
-package dlindustries.vigillant.system.utils;
+package dev.lvstrng.argon.utils;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.math.MathHelper;
