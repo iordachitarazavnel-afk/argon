@@ -186,7 +186,8 @@ public class SafeAnchor extends Module {
                 currentState = State.IDLE;
                 return;
             }
-            mc.player.getInventory().selectedSlot = slot;
+            // Folosește metoda setSelectedSlot în loc de acces direct
+            mc.player.getInventory().setSelectedSlot(slot);
         }
         
         boolean placed = placeBlock(anchorPos);
@@ -242,7 +243,7 @@ public class SafeAnchor extends Module {
                 currentState = State.IDLE;
                 return;
             }
-            mc.player.getInventory().selectedSlot = slot;
+            mc.player.getInventory().setSelectedSlot(slot);
         }
         
         boolean placed = placeBlock(glowstonePos);
