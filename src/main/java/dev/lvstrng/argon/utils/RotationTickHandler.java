@@ -1,4 +1,4 @@
-package dlindustries.vigillant.system.utils;
+package dev.lvstrng.argon.utils;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
