@@ -38,7 +38,7 @@ public final class PremiumKeybindBox extends PremiumRenderableSetting {
         // Keybind pill
         String keyText = setting.isListening()
                 ? "Press key..."
-                : KeyUtils.getKey(setting.getKey());
+                : KeyUtils.getKey(setting.getKey().toString());
 
         int pillW = TextRenderer.getWidth(keyText) + 16;
         int pillX = rx + rw - pillW - 4;
