@@ -15,6 +15,41 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
+    @Shadow public abstract Matrix4f getBasicProjectionMatrix(float fov);
+    @Shadow protected abstract float getFov(Camera camera, float tickProgress, boolean changingFov);
+    @Shadow @Final private Camera camera;
+
+    // ===== REDIRECT CAMERA ROTATION FOR SILENT ROTATIONS =====
+    @Redirect(
+        method = "renderWorld",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/render/Camera;getRotation()Lorg/joml/Quaternionf;"
+        )
+    )
+    private Quaternionf redirectCameraRotation(Camera camera) {
+        // Check if silent rotation is active and not in third person
+        if (RotationManager.isSilentRotationActive() && !camera.isThirdPerson()) {
+            float visualYaw = RotationManager.getVisualYaw() + 180.0F;
+            float visualPitch = RotationManager.getVisualPitch();
+
+            if (Float.isFinite(visualYaw) && Float.isFinite(visualPitch)) {
+                Quaternionf customRotation = new Quaternionf(0.0F, 0.0F, 0.0F, 1.0F);
+                customRotation.mul(new Quaternionf().rotationYXZ(
+                    (float) Math.toRadians(-visualYaw),
+                    (float) Math.toRadians(visualPitch),
+                    0.0F
+                ));
+
+                if (Float.isFinite(customRotation.x) && Float.isFinite(customRotation.y)
+                    && Float.isFinite(customRotation.z) && Float.isFinite(customRotation.w)) {
+                    return customRotation;
+                }
+            }
+        }
+        return camera.getRotation();
+    }
+
 	@Inject(method = "renderWorld", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/util/profiler/Profiler;swap(Ljava/lang/String;)V", args = "ldc=hand"))
 	private void onWorldRender(RenderTickCounter tickCounter, CallbackInfo ci) {
 		MatrixStack matrixStack = new MatrixStack();
