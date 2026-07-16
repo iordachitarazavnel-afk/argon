@@ -186,18 +186,12 @@ public class SafeAnchor extends Module {
                 currentState = State.IDLE;
                 return;
             }
-            // Folosim metoda setSelectedSlot() în loc de acces direct
-            mc.player.getInventory().setSelectedSlot(slot);
+            mc.player.getInventory().selectedSlot = slot;
         }
         
         boolean placed = placeBlock(anchorPos);
         
         if (placed) {
-            if (visualFeedback.getValue()) {
-                // Folosim metoda corectă pentru particule
-                mc.particleManager.addBlockBreakParticles(anchorPos, mc.world.getBlockState(anchorPos));
-            }
-            
             mc.player.sendMessage(Text.literal("§a✅ Respawn Anchor placed!"), false);
             
             currentState = State.ROTATING_TO_GLOWSTONE;
@@ -248,16 +242,12 @@ public class SafeAnchor extends Module {
                 currentState = State.IDLE;
                 return;
             }
-            mc.player.getInventory().setSelectedSlot(slot);
+            mc.player.getInventory().selectedSlot = slot;
         }
         
         boolean placed = placeBlock(glowstonePos);
         
         if (placed) {
-            if (visualFeedback.getValue()) {
-                mc.particleManager.addBlockBreakParticles(glowstonePos, mc.world.getBlockState(glowstonePos));
-            }
-            
             currentState = State.COMPLETE;
             RotationManager.clearRotation();
             
@@ -300,7 +290,6 @@ public class SafeAnchor extends Module {
     private Direction getPlaceDirection(BlockPos pos) {
         if (mc.player == null) return null;
         
-        // Folosim getBlockPos() în loc de getPos() pentru poziția jucătorului
         BlockPos playerBlockPos = mc.player.getBlockPos();
         Vec3d blockPos = Vec3d.ofCenter(pos);
         Vec3d playerCenter = Vec3d.ofCenter(playerBlockPos);
