@@ -1,21 +1,14 @@
 package dev.lvstrng.argon.utils;
 
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.Minecraft;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents; // Correct import for Fabric API
+import net.minecraft.client.MinecraftClient;
 
 public class RotationTickHandler {
-    
-    private static boolean registered = false;
 
     public static void register() {
-        if (registered) return;
-        registered = true;
-        
-        ClientTickEvents.START_CLIENT_TICK.register(client -> {
-            // Actualizează RotationManager la fiecare tick
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
             RotationManager.update(1.0f);
         });
-        
         System.out.println("[RotationManager] Tick handler registered!");
     }
 }
