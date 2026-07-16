@@ -4,12 +4,21 @@ import dev.lvstrng.argon.Argon;
 import dev.lvstrng.argon.event.EventManager;
 import dev.lvstrng.argon.event.events.GameRenderListener;
 import dev.lvstrng.argon.module.modules.misc.Freecam;
+import dev.lvstrng.argon.utils.RotationManager;
+import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.RotationAxis;
+import net.minecraft.util.math.Vec3d;
+import org.joml.Matrix4f;
+import org.joml.Quaternionf;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -50,15 +59,28 @@ public abstract class GameRendererMixin {
         return camera.getRotation();
     }
 
-	@Inject(method = "renderWorld", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/util/profiler/Profiler;swap(Ljava/lang/String;)V", args = "ldc=hand"))
-	private void onWorldRender(RenderTickCounter tickCounter, CallbackInfo ci) {
-		MatrixStack matrixStack = new MatrixStack();
-		EventManager.fire(new GameRenderListener.GameRenderEvent(matrixStack, tickCounter.getTickProgress(true)));
-	}
+    // ===== EXISTING CODE: WORLD RENDER EVENT =====
+    @Inject(method = "renderWorld", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiler/Profiler;swap(Ljava/lang/String;)V", ordinal = 1))
+    private void onWorldRender(RenderTickCounter tickCounter, CallbackInfo ci) {
+        float tickDelta = 1.0F;
+        MatrixStack matrixStack = new MatrixStack();
 
-	@Inject(method = "shouldRenderBlockOutline", at = @At("HEAD"), cancellable = true)
-	private void onShouldRenderBlockOutline(CallbackInfoReturnable<Boolean> cir) {
-		if (Argon.INSTANCE.getModuleManager().getModule(Freecam.class).isEnabled())
-			cir.setReturnValue(false);
-	}
+        if (camera != null) {
+            Vec3d cameraPos = camera.getFocusedEntity() != null
+                    ? new Vec3d(camera.getFocusedEntity().getX(), camera.getFocusedEntity().getY(), camera.getFocusedEntity().getZ())
+                    : Vec3d.ZERO;
+            matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(camera.getPitch()));
+            matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(camera.getYaw() + 180.0F));
+            matrixStack.translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
+        }
+
+        EventManager.fire(new GameRenderListener.GameRenderEvent(matrixStack, tickDelta));
+    }
+
+    // ===== BLOCK OUTLINE =====
+    @Inject(method = "shouldRenderBlockOutline", at = @At("HEAD"), cancellable = true)
+    private void onShouldRenderBlockOutline(CallbackInfoReturnable<Boolean> cir) {
+        // Poți adăuga aici condiții pentru a ascunde outline-ul blocului
+        // dacă SafeAnchor este activ
+    }
 }
